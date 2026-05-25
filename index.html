@@ -6,82 +6,117 @@
 <title>Geocodificador — Unicomer Latam</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; padding: 2rem 1rem; }
-  .container { max-width: 960px; margin: 0 auto; }
-  .header { margin-bottom: 2rem; }
-  h1 { font-size: 22px; font-weight: 600; color: #1a1a18; margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: #888780; }
-  .card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
-  label { font-size: 13px; color: #5f5e5a; display: block; margin-bottom: 6px; font-weight: 500; }
-  input[type="text"], textarea, select {
-    width: 100%; border: 0.5px solid #d3d1c7; border-radius: 8px;
-    padding: 9px 12px; font-size: 14px; font-family: inherit;
-    background: #fff; color: #1a1a18; outline: none;
-    transition: border-color 0.15s; appearance: none;
-  }
-  input[type="text"]:focus, textarea:focus, select:focus { border-color: #888780; }
-  input[type="text"].mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
-  textarea { resize: vertical; line-height: 1.6; }
-  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888780' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; cursor: pointer; }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 20px; font-size: 14px; font-weight: 500;
-    border: 0.5px solid #d3d1c7; border-radius: 8px;
-    cursor: pointer; transition: background 0.15s, transform 0.1s;
-  }
-  .btn-primary { background: #1a1a18; color: #fff; border-color: #1a1a18; }
-  .btn-primary:hover { background: #2c2c2a; }
-  .btn-primary:disabled { background: #b4b2a9; border-color: #b4b2a9; cursor: not-allowed; }
-  .btn-secondary { background: #fff; color: #1a1a18; }
-  .btn-secondary:hover { background: #f1efe8; }
-  .btn:active { transform: scale(0.98); }
-  .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 1.25rem; }
-  .status-msg { font-size: 13px; color: #5f5e5a; }
-  .progress-wrap { margin-top: 1rem; display: none; }
-  .progress-bar { height: 4px; background: #f1efe8; border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: #1a1a18; border-radius: 2px; transition: width 0.3s; width: 0%; }
-  .progress-text { font-size: 12px; color: #888780; margin-top: 5px; }
-  .results-wrap { display: none; margin-top: 1.25rem; }
-  .summary { display: flex; gap: 12px; margin-bottom: 1.25rem; flex-wrap: wrap; }
-  .metric { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 10px; padding: 12px 20px; min-width: 100px; }
-  .metric-val { font-size: 24px; font-weight: 600; }
-  .metric-lbl { font-size: 12px; color: #888780; margin-top: 2px; }
-  .download-section { background: #f5f4f0; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
-  .download-title { font-size: 13px; font-weight: 500; color: #5f5e5a; margin-bottom: 10px; }
-  .download-btns { display: flex; gap: 10px; flex-wrap: wrap; }
-  .btn-xlsx { background: #1d6a3a; color: #fff; border-color: #1d6a3a; }
-  .btn-xlsx:hover { background: #15522d; }
-  .btn-csv { background: #185fa5; color: #fff; border-color: #185fa5; }
-  .btn-csv:hover { background: #0c447c; }
-  .btn-copy { background: #fff; color: #1a1a18; }
-  .btn-copy:hover { background: #f1efe8; }
-  .table-scroll { overflow-x: auto; border: 0.5px solid #d3d1c7; border-radius: 12px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 750px; }
-  thead tr { background: #f5f4f0; }
-  th { padding: 10px 12px; text-align: left; font-weight: 500; color: #5f5e5a; border-bottom: 0.5px solid #d3d1c7; white-space: nowrap; }
-  td { padding: 9px 12px; border-bottom: 0.5px solid #f1efe8; color: #1a1a18; word-break: break-word; vertical-align: top; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fafaf8; }
-  .mono-cell { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; text-align: center; white-space: nowrap; }
-  .badge-ok { display: inline-flex; align-items: center; gap: 4px; background: #eaf3de; color: #3b6d11; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-  .badge-err { display: inline-flex; align-items: center; gap: 4px; background: #fcebeb; color: #a32d2d; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-  .tip { font-size: 12px; color: #888780; margin-top: 8px; }
-  .key-saved { font-size: 12px; color: #3b6d11; white-space: nowrap; display: none; }
-  svg.icon { width: 15px; height: 15px; display: inline-block; vertical-align: -2px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  @media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; padding: 2rem 1rem; }
+.container { max-width: 980px; margin: 0 auto; }
+h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #888780; margin-bottom: 2rem; }
+.card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+.section-label { font-size: 11px; color: #888780; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+label { font-size: 13px; color: #5f5e5a; display: block; margin-bottom: 5px; font-weight: 500; }
+input[type="text"], select, textarea {
+  width: 100%; border: 0.5px solid #d3d1c7; border-radius: 8px;
+  padding: 8px 11px; font-size: 14px; font-family: inherit;
+  background: #fff; color: #1a1a18; outline: none; transition: border-color 0.15s;
+}
+input[type="text"]:focus, select:focus, textarea:focus { border-color: #888780; }
+input.mono { font-family: 'SF Mono','Fira Code',monospace; font-size: 13px; }
+select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888780' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 32px; cursor: pointer; }
+textarea { resize: vertical; line-height: 1.65; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; font-size: 14px; font-weight: 500; border: 0.5px solid #d3d1c7; border-radius: 8px; cursor: pointer; transition: background 0.12s, transform 0.1s; font-family: inherit; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+.btn-primary:hover { background: #333; }
+.btn-primary:disabled { background: #b4b2a9; border-color: #b4b2a9; cursor: not-allowed; }
+.btn-ghost { background: #fff; color: #1a1a18; }
+.btn-ghost:hover { background: #f1efe8; }
+.btn-green { background: #1d6a3a; color: #fff; border-color: #1d6a3a; }
+.btn-green:hover { background: #155230; }
+.btn-blue { background: #185fa5; color: #fff; border-color: #185fa5; }
+.btn-blue:hover { background: #0c447c; }
+.input-row { display: flex; gap: 8px; align-items: center; }
+.key-saved { font-size: 12px; color: #3b6d11; white-space: nowrap; display: none; }
+.tip { font-size: 12px; color: #888780; margin-top: 7px; }
+
+.mode-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.mode-card { border: 0.5px solid #d3d1c7; border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.mode-card:hover { border-color: #888780; background: #fafaf8; }
+.mode-card.active { border: 2px solid #185fa5; background: #f0f7ff; }
+.mode-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.mode-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.mode-icon.text { background: #e6f1fb; color: #185fa5; }
+.mode-icon.file { background: #eaf3de; color: #3b6d11; }
+.mode-card.active .mode-title { color: #185fa5; }
+.mode-title { font-size: 13px; font-weight: 600; color: #1a1a18; }
+.mode-badge { font-size: 11px; background: #e6f1fb; color: #185fa5; padding: 1px 8px; border-radius: 20px; margin-left: auto; display: none; }
+.mode-card.active .mode-badge { display: inline; }
+.mode-desc { font-size: 12px; color: #5f5e5a; }
+
+.drop-zone { border: 1.5px dashed #d3d1c7; border-radius: 10px; padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.drop-zone:hover, .drop-zone.drag-over { border-color: #185fa5; background: #f0f7ff; }
+.drop-zone-icon { font-size: 32px; color: #b4b2a9; margin-bottom: 8px; }
+.drop-zone-text { font-size: 14px; color: #5f5e5a; margin-bottom: 4px; }
+.drop-zone-sub { font-size: 12px; color: #888780; }
+input[type="file"] { display: none; }
+
+.col-picker { display: none; margin-top: 12px; }
+.col-picker-label { font-size: 13px; color: #5f5e5a; font-weight: 500; margin-bottom: 6px; }
+.col-preview { margin-top: 10px; border: 0.5px solid #d3d1c7; border-radius: 8px; overflow: hidden; }
+.col-preview-header { background: #f5f4f0; padding: 6px 12px; font-size: 11px; color: #888780; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.col-preview-rows { padding: 8px 12px; font-size: 13px; color: #5f5e5a; line-height: 1.8; }
+
+.progress-wrap { display: none; margin-top: 12px; }
+.progress-bar { height: 4px; background: #f1efe8; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: #1a1a18; border-radius: 2px; transition: width 0.25s; width: 0%; }
+.progress-text { font-size: 12px; color: #888780; margin-top: 5px; }
+
+.btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.status-msg { font-size: 13px; color: #5f5e5a; }
+
+.results-section { display: none; }
+
+.gauge-card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
+.gauge-title { font-size: 11px; color: #888780; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1.25rem; }
+.gauge-layout { display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; }
+.gauge-circle-wrap { flex-shrink: 0; }
+.gauge-svg { width: 120px; height: 120px; }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; flex: 1; }
+.metric { background: #f5f4f0; border-radius: 8px; padding: 10px 14px; }
+.metric-val { font-size: 22px; font-weight: 600; }
+.metric-lbl { font-size: 12px; color: #888780; margin-top: 2px; }
+.metric-sub { font-size: 11px; color: #b4b2a9; margin-top: 1px; }
+
+.download-bar { background: #f5f4f0; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.download-label { font-size: 13px; font-weight: 500; color: #5f5e5a; margin-right: 4px; }
+
+.table-card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; overflow: hidden; }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
+thead tr { background: #f5f4f0; }
+th { padding: 9px 12px; text-align: left; font-weight: 500; color: #5f5e5a; border-bottom: 0.5px solid #d3d1c7; white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 0.5px solid #f1efe8; vertical-align: top; word-break: break-word; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafaf8; }
+.mono-sm { font-family: 'SF Mono','Fira Code',monospace; font-size: 12px; white-space: nowrap; }
+.badge-ok { display: inline-flex; align-items: center; gap: 3px; background: #eaf3de; color: #27500a; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.badge-warn { display: inline-flex; align-items: center; gap: 3px; background: #faeeda; color: #633806; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.badge-err { display: inline-flex; align-items: center; gap: 3px; background: #fcebeb; color: #791f1f; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.prec-exact { color: #27500a; font-weight: 500; }
+.prec-interp { color: #633806; }
+.prec-approx { color: #888780; }
+
+@media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } .mode-selector { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div class="container">
 
-  <div class="header">
-    <h1>Geocodificador de Direcciones</h1>
-    <p class="subtitle">Unicomer Latam · Powered by Google Maps Geocoding API</p>
-  </div>
+  <h1>Geocodificador de Direcciones</h1>
+  <p class="subtitle">Unicomer Latam · Powered by Google Maps Geocoding API</p>
 
   <div class="card">
+    <div class="section-label">Configuración</div>
     <div class="row2">
       <div>
         <label>País</label>
@@ -96,23 +131,63 @@
       </div>
       <div>
         <label>API Key de Google Maps</label>
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div class="input-row">
           <input type="text" id="apiKey" class="mono" placeholder="AIzaSy..." oninput="savePrefs()" style="flex:1;" />
           <span class="key-saved" id="keySaved">✓ Guardada</span>
         </div>
+        <p class="tip">Se guarda automáticamente en tu navegador.</p>
       </div>
     </div>
-    <p class="tip">La API Key se guarda automáticamente en tu navegador. Obtenela en console.cloud.google.com → APIs & Services → Credentials</p>
   </div>
 
   <div class="card">
-    <label>Direcciones a geocodificar <span style="color:#b4b2a9;font-weight:400">(una por línea)</span></label>
-    <textarea id="addressInput" rows="10" placeholder="5a Avenida 12-34, Zona 1&#10;Calzada Roosevelt 22-50, Zona 11&#10;13 Calle 8-44, Zona 10"></textarea>
+    <div class="section-label">Ingreso de direcciones — elegí una opción</div>
+
+    <div class="mode-selector">
+      <div class="mode-card active" id="modeText" onclick="setMode('text')">
+        <div class="mode-card-header">
+          <div class="mode-icon text">✏️</div>
+          <span class="mode-title">Pegar texto</span>
+          <span class="mode-badge">Activo</span>
+        </div>
+        <p class="mode-desc">Una dirección por línea, directo en el campo de texto abajo</p>
+      </div>
+      <div class="mode-card" id="modeFile" onclick="setMode('file')">
+        <div class="mode-card-header">
+          <div class="mode-icon file">📂</div>
+          <span class="mode-title">Subir archivo Excel / CSV</span>
+          <span class="mode-badge">Activo</span>
+        </div>
+        <p class="mode-desc">Subí tu archivo y elegí qué columna contiene las direcciones</p>
+      </div>
+    </div>
+
+    <div id="panelText">
+      <label>Direcciones <span style="color:#b4b2a9;font-weight:400">(una por línea)</span></label>
+      <textarea id="addressInput" rows="9" placeholder="5a Avenida 12-34, Zona 1&#10;Calzada Roosevelt 22-50, Zona 11&#10;13 Calle 8-44, Zona 10"></textarea>
+    </div>
+
+    <div id="panelFile" style="display:none;">
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+        <div class="drop-zone-icon">📄</div>
+        <p class="drop-zone-text">Arrastrá tu archivo acá o hacé click para seleccionar</p>
+        <p class="drop-zone-sub">Formatos aceptados: .xlsx, .xls, .csv</p>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
+
+      <div class="col-picker" id="colPicker">
+        <p class="col-picker-label">¿Qué columna tiene las direcciones?</p>
+        <select id="colSelect" onchange="previewColumn()"></select>
+        <div class="col-preview" id="colPreview" style="display:none;">
+          <div class="col-preview-header">Vista previa — primeras 5 filas</div>
+          <div class="col-preview-rows" id="colPreviewRows"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="btn-row">
       <button class="btn btn-primary" id="geocodeBtn" onclick="startGeocoding()">
-        <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Geocodificar
+        🔍 Geocodificar
       </button>
       <span class="status-msg" id="statusMsg"></span>
     </div>
@@ -123,55 +198,59 @@
     </div>
   </div>
 
-  <div class="results-wrap" id="resultsWrap">
+  <div class="results-section" id="resultsSection">
 
-    <div class="summary" id="summaryCards"></div>
-
-    <div class="download-section">
-      <p class="download-title">Descargar direcciones corregidas con coordenadas:</p>
-      <div class="download-btns">
-        <button class="btn btn-xlsx" onclick="downloadXLSX()">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Descargar Excel (.xlsx)
-        </button>
-        <button class="btn btn-csv" onclick="downloadCSV()">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Descargar CSV
-        </button>
-        <button class="btn btn-copy" onclick="copyResults()">
-          <svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copiar para pegar en Excel
-        </button>
+    <div class="gauge-card">
+      <div class="gauge-title">Resultado de geocodificación</div>
+      <div class="gauge-layout">
+        <div class="gauge-circle-wrap">
+          <svg class="gauge-svg" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#f1efe8" stroke-width="10"/>
+            <circle id="gaugeArc" cx="60" cy="60" r="50" fill="none" stroke="#1d6a3a" stroke-width="10"
+              stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"
+              transform="rotate(-90 60 60)" style="transition: stroke-dashoffset 1s ease;"/>
+            <text id="gaugePct" x="60" y="55" text-anchor="middle" font-size="22" font-weight="600" fill="#1a1a18">0%</text>
+            <text x="60" y="73" text-anchor="middle" font-size="11" fill="#888780">geocodificadas</text>
+          </svg>
+        </div>
+        <div class="metrics-grid" id="metricsGrid"></div>
       </div>
-      <p class="tip">El archivo incluye: dirección original, dirección corregida, latitud, longitud, precisión y estado.</p>
     </div>
 
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:25%">Dirección original</th>
-            <th style="width:29%">Dirección corregida</th>
-            <th style="width:11%">Latitud</th>
-            <th style="width:11%">Longitud</th>
-            <th style="width:10%">Precisión</th>
-            <th style="width:14%">Estado</th>
-          </tr>
-        </thead>
-        <tbody id="resultsBody"></tbody>
-      </table>
+    <div class="download-bar">
+      <span class="download-label">Descargar direcciones corregidas:</span>
+      <button class="btn btn-green" onclick="downloadXLSX()">⬇ Excel (.xlsx)</button>
+      <button class="btn btn-blue" onclick="downloadCSV()">⬇ CSV</button>
+      <button class="btn btn-ghost" onclick="copyResults()">⎘ Copiar para Excel</button>
+      <span class="status-msg" id="dlMsg"></span>
     </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:24%">Dirección original</th>
+              <th style="width:28%">Dirección corregida</th>
+              <th style="width:10%">Latitud</th>
+              <th style="width:10%">Longitud</th>
+              <th style="width:11%">Precisión</th>
+              <th style="width:17%">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
 </div>
 
 <script>
 let resultsData = [];
-
-const COUNTRIES = {
-  'Guatemala': 'gt', 'El Salvador': 'sv', 'Honduras': 'hn',
-  'Nicaragua': 'ni', 'Costa Rica': 'cr', 'Ecuador': 'ec'
-};
+let fileRows = [];
+const COUNTRIES = { 'Guatemala':'gt','El Salvador':'sv','Honduras':'hn','Nicaragua':'ni','Costa Rica':'cr','Ecuador':'ec' };
 
 window.onload = function() {
   const key = localStorage.getItem('gmaps_api_key');
@@ -182,150 +261,193 @@ window.onload = function() {
 
 function savePrefs() {
   const val = document.getElementById('apiKey').value.trim();
-  const country = document.getElementById('countrySelect').value;
-  localStorage.setItem('gmaps_country', country);
-  if (val.length > 10) {
-    localStorage.setItem('gmaps_api_key', val);
-    document.getElementById('keySaved').style.display = 'inline';
-  } else {
-    localStorage.removeItem('gmaps_api_key');
-    document.getElementById('keySaved').style.display = 'none';
-  }
+  localStorage.setItem('gmaps_country', document.getElementById('countrySelect').value);
+  if (val.length > 10) { localStorage.setItem('gmaps_api_key', val); document.getElementById('keySaved').style.display = 'inline'; }
+  else { localStorage.removeItem('gmaps_api_key'); document.getElementById('keySaved').style.display = 'none'; }
+}
+
+function setMode(m) {
+  document.getElementById('modeText').classList.toggle('active', m === 'text');
+  document.getElementById('modeFile').classList.toggle('active', m === 'file');
+  document.getElementById('panelText').style.display = m === 'text' ? '' : 'none';
+  document.getElementById('panelFile').style.display = m === 'file' ? '' : 'none';
+}
+
+function dragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag-over'); }
+function dragLeave(e) { document.getElementById('dropZone').classList.remove('drag-over'); }
+function dropFile(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); }
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (data.length < 2) { setStatus('El archivo está vacío.'); return; }
+      fileRows = data;
+      const headers = data[0];
+      const sel = document.getElementById('colSelect');
+      sel.innerHTML = headers.map((h, i) => `<option value="${i}">${h || 'Columna ' + (i+1)}</option>`).join('');
+      document.getElementById('colPicker').style.display = 'block';
+      document.getElementById('dropZone').style.display = 'none';
+      previewColumn();
+      const dz = document.getElementById('dropZone');
+      dz.innerHTML = `<div class="drop-zone-icon">✅</div><p class="drop-zone-text">${esc(file.name)}</p><p class="drop-zone-sub">${data.length - 1} filas detectadas</p>`;
+      dz.style.display = 'block';
+    } catch(err) { setStatus('Error leyendo el archivo: ' + err.message); }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function previewColumn() {
+  const idx = parseInt(document.getElementById('colSelect').value);
+  const rows = fileRows.slice(1, 6).map(r => r[idx] || '').filter(v => v);
+  document.getElementById('colPreviewRows').innerHTML = rows.map(r => esc(r)).join('<br>');
+  document.getElementById('colPreview').style.display = rows.length ? '' : 'none';
 }
 
 async function startGeocoding() {
   const apiKey = document.getElementById('apiKey').value.trim();
-  const raw = document.getElementById('addressInput').value.trim();
   const country = document.getElementById('countrySelect').value;
   const region = COUNTRIES[country] || 'gt';
+  const isFile = document.getElementById('modeFile').classList.contains('active');
 
   if (!apiKey) { setStatus('Ingresá tu API Key primero.'); return; }
-  if (!raw) { setStatus('Pegá al menos una dirección.'); return; }
 
-  const addresses = raw.split('\n').map(a => a.trim()).filter(a => a.length > 0);
+  let addresses = [];
+  if (isFile) {
+    if (!fileRows.length) { setStatus('Subí un archivo primero.'); return; }
+    const idx = parseInt(document.getElementById('colSelect').value);
+    addresses = fileRows.slice(1).map(r => (r[idx] || '').toString().trim()).filter(a => a.length > 0);
+  } else {
+    const raw = document.getElementById('addressInput').value.trim();
+    if (!raw) { setStatus('Pegá al menos una dirección.'); return; }
+    addresses = raw.split('\n').map(a => a.trim()).filter(a => a.length > 0);
+  }
+
   resultsData = [];
-
   document.getElementById('progressWrap').style.display = 'block';
-  document.getElementById('resultsWrap').style.display = 'none';
+  document.getElementById('resultsSection').style.display = 'none';
   document.getElementById('geocodeBtn').disabled = true;
+  document.getElementById('resultsBody').innerHTML = '';
   setStatus('');
-
-  const body = document.getElementById('resultsBody');
-  body.innerHTML = '';
 
   for (let i = 0; i < addresses.length; i++) {
     const addr = addresses[i];
     setProgress(i, addresses.length, addr);
-
-    let result = { original: addr, normalized: '', lat: '', lng: '', precision: '', status: 'error' };
-
+    let result = { original: addr, normalized: '', lat: '', lng: '', precision: '', precType: '', status: 'error' };
     try {
-      const query = encodeURIComponent(addr + ', ' + country);
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}&region=${region}&language=es`;
+      const q = encodeURIComponent(addr + ', ' + country);
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${q}&key=${apiKey}&region=${region}&language=es`;
       const resp = await fetch(url);
       const data = await resp.json();
-
       if (data.status === 'OK' && data.results.length > 0) {
         const r = data.results[0];
         result.normalized = r.formatted_address;
         result.lat = r.geometry.location.lat.toFixed(6);
         result.lng = r.geometry.location.lng.toFixed(6);
+        result.precType = r.geometry.location_type;
         result.precision = translateType(r.geometry.location_type);
         result.status = 'ok';
-      } else if (data.status === 'ZERO_RESULTS') {
-        result.status = 'no encontrado';
-      } else if (data.status === 'REQUEST_DENIED') {
-        result.status = 'API key inválida';
-      } else {
-        result.status = data.status || 'error';
-      }
-    } catch (e) {
-      result.status = 'error: ' + e.message;
-    }
-
+      } else if (data.status === 'ZERO_RESULTS') { result.status = 'no encontrado';
+      } else if (data.status === 'REQUEST_DENIED') { result.status = 'API key inválida';
+      } else { result.status = data.status || 'error'; }
+    } catch(e) { result.status = 'error de red'; }
     resultsData.push(result);
-
-    const tr = document.createElement('tr');
-    const isOk = result.status === 'ok';
-    tr.innerHTML = `
-      <td>${esc(addr)}</td>
-      <td style="color:#5f5e5a">${esc(result.normalized)}</td>
-      <td class="mono-cell">${result.lat}</td>
-      <td class="mono-cell">${result.lng}</td>
-      <td style="text-align:center;font-size:12px;color:#888780">${result.precision}</td>
-      <td style="text-align:center"><span class="${isOk ? 'badge-ok' : 'badge-err'}">${isOk ? '✓ OK' : esc(result.status)}</span></td>
-    `;
-    body.appendChild(tr);
+    appendRow(result);
     await sleep(100);
   }
 
   setProgress(addresses.length, addresses.length, '');
   document.getElementById('progressText').textContent = `Listo — ${addresses.length} dirección${addresses.length !== 1 ? 'es' : ''} procesada${addresses.length !== 1 ? 's' : ''}.`;
-
-  const ok = resultsData.filter(r => r.status === 'ok').length;
-  const err = resultsData.length - ok;
-  document.getElementById('summaryCards').innerHTML = `
-    <div class="metric"><div class="metric-val">${resultsData.length}</div><div class="metric-lbl">Total</div></div>
-    <div class="metric"><div class="metric-val" style="color:#3b6d11">${ok}</div><div class="metric-lbl">Geocodificadas</div></div>
-    <div class="metric"><div class="metric-val" style="color:#a32d2d">${err}</div><div class="metric-lbl">Con error</div></div>
-  `;
-
-  document.getElementById('resultsWrap').style.display = 'block';
   document.getElementById('geocodeBtn').disabled = false;
+  renderResults();
+}
+
+function appendRow(r) {
+  const isOk = r.status === 'ok';
+  const precClass = r.precType === 'ROOFTOP' ? 'prec-exact' : r.precType === 'RANGE_INTERPOLATED' ? 'prec-interp' : 'prec-approx';
+  const badge = isOk ? `<span class="badge-ok">✓ OK</span>` : `<span class="badge-err">${esc(r.status)}</span>`;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${esc(r.original)}</td><td style="color:#5f5e5a">${esc(r.normalized)}</td><td class="mono-sm">${r.lat}</td><td class="mono-sm">${r.lng}</td><td class="${precClass}" style="font-size:12px">${r.precision}</td><td style="text-align:center">${badge}</td>`;
+  document.getElementById('resultsBody').appendChild(tr);
+}
+
+function renderResults() {
+  const total = resultsData.length;
+  const ok = resultsData.filter(r => r.status === 'ok').length;
+  const err = total - ok;
+  const exact = resultsData.filter(r => r.precType === 'ROOFTOP').length;
+  const pct = total ? Math.round((ok / total) * 100) : 0;
+  const circum = 314;
+  const offset = circum - (circum * pct / 100);
+  const arc = document.getElementById('gaugeArc');
+  arc.setAttribute('stroke-dashoffset', circum);
+  arc.setAttribute('stroke', pct >= 80 ? '#1d6a3a' : pct >= 50 ? '#ba7517' : '#a32d2d');
+  setTimeout(() => arc.setAttribute('stroke-dashoffset', offset), 100);
+  document.getElementById('gaugePct').textContent = pct + '%';
+
+  document.getElementById('metricsGrid').innerHTML = `
+    <div class="metric"><div class="metric-val">${total}</div><div class="metric-lbl">Total</div></div>
+    <div class="metric"><div class="metric-val" style="color:#1d6a3a">${ok}</div><div class="metric-lbl">Geocodificadas</div><div class="metric-sub">✓ Con coordenadas</div></div>
+    <div class="metric"><div class="metric-val" style="color:#a32d2d">${err}</div><div class="metric-lbl">Con error</div><div class="metric-sub">Sin resultado</div></div>
+    <div class="metric"><div class="metric-val" style="color:#185fa5">${exact}</div><div class="metric-lbl">Exactas</div><div class="metric-sub">Precisión rooftop</div></div>
+  `;
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function translateType(t) {
-  const map = { ROOFTOP: 'Exacta', RANGE_INTERPOLATED: 'Interpolada', GEOMETRIC_CENTER: 'Centro', APPROXIMATE: 'Aprox.' };
-  return map[t] || t || '';
+  const m = { ROOFTOP:'Exacta', RANGE_INTERPOLATED:'Interpolada', GEOMETRIC_CENTER:'Centro', APPROXIMATE:'Aprox.' };
+  return m[t] || t || '';
 }
 
 function setProgress(i, total, addr) {
   const pct = Math.round((i / total) * 100);
   document.getElementById('progressFill').style.width = pct + '%';
-  if (addr) document.getElementById('progressText').textContent = `Procesando ${i + 1} de ${total}: ${addr.substring(0, 60)}...`;
+  if (addr) document.getElementById('progressText').textContent = `Procesando ${i+1} de ${total}: ${addr.substring(0,65)}...`;
 }
 
 function setStatus(msg) { document.getElementById('statusMsg').textContent = msg; }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function getTableData() {
-  const headers = ['Dirección original', 'Dirección corregida', 'Latitud', 'Longitud', 'Precisión', 'Estado'];
+function getRows() {
+  const h = ['Dirección original','Dirección corregida','Latitud','Longitud','Precisión','Estado'];
   const rows = resultsData.map(r => [r.original, r.normalized, r.lat, r.lng, r.precision, r.status]);
-  return { headers, rows };
+  return { h, rows };
 }
 
 function downloadXLSX() {
   if (!resultsData.length) return;
-  const { headers, rows } = getTableData();
+  const { h, rows } = getRows();
   const country = document.getElementById('countrySelect').value;
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-  ws['!cols'] = [{ wch: 40 }, { wch: 45 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+  const ws = XLSX.utils.aoa_to_sheet([h, ...rows]);
+  ws['!cols'] = [{wch:40},{wch:45},{wch:14},{wch:14},{wch:14},{wch:16}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Direcciones');
-  XLSX.writeFile(wb, `geocodificacion_${country.replace(' ','_').toLowerCase()}.xlsx`);
+  XLSX.writeFile(wb, `geocodificacion_${country.replace(/ /g,'_').toLowerCase()}.xlsx`);
 }
 
 function downloadCSV() {
   if (!resultsData.length) return;
-  const { headers, rows } = getTableData();
+  const { h, rows } = getRows();
   const country = document.getElementById('countrySelect').value;
-  const allRows = [headers, ...rows].map(r => r.map(v => `"${(v||'').replace(/"/g,'""')}"`).join(','));
-  const csv = '\uFEFF' + allRows.join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
+  const csv = '\uFEFF' + [h,...rows].map(r => r.map(v => `"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a = document.createElement('a');
-  a.href = url; a.download = `geocodificacion_${country.replace(' ','_').toLowerCase()}.csv`; a.click();
-  URL.revokeObjectURL(url);
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  a.download = `geocodificacion_${country.replace(/ /g,'_').toLowerCase()}.csv`;
+  a.click();
 }
 
 function copyResults() {
   if (!resultsData.length) return;
-  const { headers, rows } = getTableData();
-  const text = [headers, ...rows].map(r => r.join('\t')).join('\n');
-  navigator.clipboard.writeText(text).then(() => {
-    setStatus('¡Copiado! Abrí Excel y pegá con Ctrl+V.');
-    setTimeout(() => setStatus(''), 4000);
+  const { h, rows } = getRows();
+  navigator.clipboard.writeText([h,...rows].map(r => r.join('\t')).join('\n')).then(() => {
+    document.getElementById('dlMsg').textContent = '¡Copiado! Abrí Excel y pegá con Ctrl+V.';
+    setTimeout(() => document.getElementById('dlMsg').textContent = '', 4000);
   });
 }
 </script>
