@@ -3,93 +3,116 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Geocodificador Guatemala — Unicomer</title>
+<title>Geocodificador — Unicomer Latam</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; min-height: 100vh; padding: 2rem 1rem; }
-  .container { max-width: 900px; margin: 0 auto; }
-  h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; color: #1a1a18; }
-  .subtitle { font-size: 13px; color: #888780; margin-bottom: 2rem; }
+  .container { max-width: 960px; margin: 0 auto; }
+  .header { margin-bottom: 2rem; }
+  h1 { font-size: 22px; font-weight: 600; color: #1a1a18; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888780; }
   .card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
   label { font-size: 13px; color: #5f5e5a; display: block; margin-bottom: 6px; font-weight: 500; }
-  input[type="text"], textarea {
+  input[type="text"], textarea, select {
     width: 100%; border: 0.5px solid #d3d1c7; border-radius: 8px;
     padding: 9px 12px; font-size: 14px; font-family: inherit;
     background: #fff; color: #1a1a18; outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s; appearance: none;
   }
-  input[type="text"]:focus, textarea:focus { border-color: #888780; }
+  input[type="text"]:focus, textarea:focus, select:focus { border-color: #888780; }
   input[type="text"].mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
   textarea { resize: vertical; line-height: 1.6; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888780' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; cursor: pointer; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 9px 20px; font-size: 14px; font-weight: 500;
     border: 0.5px solid #d3d1c7; border-radius: 8px;
-    background: #1a1a18; color: #fff; cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
   }
-  .btn:hover { background: #2c2c2a; }
-  .btn:active { transform: scale(0.98); }
-  .btn:disabled { background: #b4b2a9; cursor: not-allowed; }
+  .btn-primary { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+  .btn-primary:hover { background: #2c2c2a; }
+  .btn-primary:disabled { background: #b4b2a9; border-color: #b4b2a9; cursor: not-allowed; }
   .btn-secondary { background: #fff; color: #1a1a18; }
   .btn-secondary:hover { background: #f1efe8; }
-  .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 1rem; }
+  .btn:active { transform: scale(0.98); }
+  .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 1.25rem; }
   .status-msg { font-size: 13px; color: #5f5e5a; }
   .progress-wrap { margin-top: 1rem; display: none; }
   .progress-bar { height: 4px; background: #f1efe8; border-radius: 2px; overflow: hidden; }
   .progress-fill { height: 100%; background: #1a1a18; border-radius: 2px; transition: width 0.3s; width: 0%; }
   .progress-text { font-size: 12px; color: #888780; margin-top: 5px; }
   .results-wrap { display: none; margin-top: 1.25rem; }
+  .summary { display: flex; gap: 12px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .metric { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 10px; padding: 12px 20px; min-width: 100px; }
+  .metric-val { font-size: 24px; font-weight: 600; }
+  .metric-lbl { font-size: 12px; color: #888780; margin-top: 2px; }
+  .download-section { background: #f5f4f0; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+  .download-title { font-size: 13px; font-weight: 500; color: #5f5e5a; margin-bottom: 10px; }
+  .download-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-xlsx { background: #1d6a3a; color: #fff; border-color: #1d6a3a; }
+  .btn-xlsx:hover { background: #15522d; }
+  .btn-csv { background: #185fa5; color: #fff; border-color: #185fa5; }
+  .btn-csv:hover { background: #0c447c; }
+  .btn-copy { background: #fff; color: #1a1a18; }
+  .btn-copy:hover { background: #f1efe8; }
   .table-scroll { overflow-x: auto; border: 0.5px solid #d3d1c7; border-radius: 12px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 750px; }
   thead tr { background: #f5f4f0; }
   th { padding: 10px 12px; text-align: left; font-weight: 500; color: #5f5e5a; border-bottom: 0.5px solid #d3d1c7; white-space: nowrap; }
   td { padding: 9px 12px; border-bottom: 0.5px solid #f1efe8; color: #1a1a18; word-break: break-word; vertical-align: top; }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #f5f4f0; }
+  tr:hover td { background: #fafaf8; }
   .mono-cell { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; text-align: center; white-space: nowrap; }
-  .status-ok { color: #3b6d11; font-weight: 500; }
-  .status-err { color: #a32d2d; font-weight: 500; }
-  .badge-ok { display: inline-flex; align-items: center; gap: 4px; background: #eaf3de; color: #3b6d11; padding: 2px 8px; border-radius: 20px; font-size: 12px; }
-  .badge-err { display: inline-flex; align-items: center; gap: 4px; background: #fcebeb; color: #a32d2d; padding: 2px 8px; border-radius: 20px; font-size: 12px; }
-  .summary { display: flex; gap: 12px; margin-bottom: 1rem; flex-wrap: wrap; }
-  .metric { background: #f5f4f0; border-radius: 8px; padding: 10px 16px; }
-  .metric-val { font-size: 22px; font-weight: 600; }
-  .metric-lbl { font-size: 12px; color: #888780; margin-top: 2px; }
+  .badge-ok { display: inline-flex; align-items: center; gap: 4px; background: #eaf3de; color: #3b6d11; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .badge-err { display: inline-flex; align-items: center; gap: 4px; background: #fcebeb; color: #a32d2d; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
   .tip { font-size: 12px; color: #888780; margin-top: 8px; }
-  svg.icon { width: 14px; height: 14px; display: inline-block; vertical-align: -2px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .key-saved { font-size: 12px; color: #3b6d11; white-space: nowrap; display: none; }
+  svg.icon { width: 15px; height: 15px; display: inline-block; vertical-align: -2px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  @media (max-width: 600px) { .row2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Geocodificador de Direcciones</h1>
-  <p class="subtitle">Guatemala · Powered by Google Maps Geocoding API</p>
 
-  <div class="card">
-    <label>API Key de Google Maps</label>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <input type="text" id="apiKey" class="mono" placeholder="AIzaSy..." oninput="saveKey()" style="flex:1;" />
-      <span id="keySaved" style="font-size:12px; color:#3b6d11; white-space:nowrap; display:none;">✓ Guardada</span>
-    </div>
-    <p class="tip">Se guarda automáticamente en tu navegador. Conseguila en console.cloud.google.com → APIs & Services → Credentials</p>
+  <div class="header">
+    <h1>Geocodificador de Direcciones</h1>
+    <p class="subtitle">Unicomer Latam · Powered by Google Maps Geocoding API</p>
   </div>
 
   <div class="card">
-    <label>Direcciones a geocodificar (una por línea)</label>
-    <textarea id="addressInput" rows="10" placeholder="5a Avenida 12-34, Zona 1, Guatemala&#10;Calzada Roosevelt 22-50, Zona 11&#10;13 Calle 8-44, Zona 10, Guatemala City"></textarea>
+    <div class="row2">
+      <div>
+        <label>País</label>
+        <select id="countrySelect" onchange="savePrefs()">
+          <option value="Guatemala">🇬🇹 Guatemala</option>
+          <option value="El Salvador">🇸🇻 El Salvador</option>
+          <option value="Honduras">🇭🇳 Honduras</option>
+          <option value="Nicaragua">🇳🇮 Nicaragua</option>
+          <option value="Costa Rica">🇨🇷 Costa Rica</option>
+          <option value="Ecuador">🇪🇨 Ecuador</option>
+        </select>
+      </div>
+      <div>
+        <label>API Key de Google Maps</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="text" id="apiKey" class="mono" placeholder="AIzaSy..." oninput="savePrefs()" style="flex:1;" />
+          <span class="key-saved" id="keySaved">✓ Guardada</span>
+        </div>
+      </div>
+    </div>
+    <p class="tip">La API Key se guarda automáticamente en tu navegador. Obtenela en console.cloud.google.com → APIs & Services → Credentials</p>
+  </div>
+
+  <div class="card">
+    <label>Direcciones a geocodificar <span style="color:#b4b2a9;font-weight:400">(una por línea)</span></label>
+    <textarea id="addressInput" rows="10" placeholder="5a Avenida 12-34, Zona 1&#10;Calzada Roosevelt 22-50, Zona 11&#10;13 Calle 8-44, Zona 10"></textarea>
 
     <div class="btn-row">
-      <button class="btn" id="geocodeBtn" onclick="startGeocoding()">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <button class="btn btn-primary" id="geocodeBtn" onclick="startGeocoding()">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Geocodificar
-      </button>
-      <button class="btn btn-secondary" id="copyBtn" onclick="copyResults()" style="display:none;">
-        <svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copiar para Excel
-      </button>
-      <button class="btn btn-secondary" id="downloadBtn" onclick="downloadCSV()" style="display:none;">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Descargar CSV
       </button>
       <span class="status-msg" id="statusMsg"></span>
     </div>
@@ -101,38 +124,66 @@
   </div>
 
   <div class="results-wrap" id="resultsWrap">
+
     <div class="summary" id="summaryCards"></div>
+
+    <div class="download-section">
+      <p class="download-title">Descargar direcciones corregidas con coordenadas:</p>
+      <div class="download-btns">
+        <button class="btn btn-xlsx" onclick="downloadXLSX()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar Excel (.xlsx)
+        </button>
+        <button class="btn btn-csv" onclick="downloadCSV()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar CSV
+        </button>
+        <button class="btn btn-copy" onclick="copyResults()">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copiar para pegar en Excel
+        </button>
+      </div>
+      <p class="tip">El archivo incluye: dirección original, dirección corregida, latitud, longitud, precisión y estado.</p>
+    </div>
+
     <div class="table-scroll">
       <table>
         <thead>
           <tr>
-            <th style="width:26%">Dirección original</th>
-            <th style="width:30%">Dirección normalizada</th>
-            <th style="width:12%">Latitud</th>
-            <th style="width:12%">Longitud</th>
+            <th style="width:25%">Dirección original</th>
+            <th style="width:29%">Dirección corregida</th>
+            <th style="width:11%">Latitud</th>
+            <th style="width:11%">Longitud</th>
             <th style="width:10%">Precisión</th>
-            <th style="width:10%">Estado</th>
+            <th style="width:14%">Estado</th>
           </tr>
         </thead>
         <tbody id="resultsBody"></tbody>
       </table>
     </div>
   </div>
+
 </div>
 
 <script>
 let resultsData = [];
 
-window.onload = function() {
-  const saved = localStorage.getItem('gmaps_api_key');
-  if (saved) {
-    document.getElementById('apiKey').value = saved;
-    document.getElementById('keySaved').style.display = 'inline';
-  }
+const COUNTRIES = {
+  'Guatemala': 'gt', 'El Salvador': 'sv', 'Honduras': 'hn',
+  'Nicaragua': 'ni', 'Costa Rica': 'cr', 'Ecuador': 'ec'
 };
 
-function saveKey() {
+window.onload = function() {
+  const key = localStorage.getItem('gmaps_api_key');
+  const country = localStorage.getItem('gmaps_country');
+  if (key) { document.getElementById('apiKey').value = key; document.getElementById('keySaved').style.display = 'inline'; }
+  if (country) document.getElementById('countrySelect').value = country;
+};
+
+function savePrefs() {
   const val = document.getElementById('apiKey').value.trim();
+  const country = document.getElementById('countrySelect').value;
+  localStorage.setItem('gmaps_country', country);
   if (val.length > 10) {
     localStorage.setItem('gmaps_api_key', val);
     document.getElementById('keySaved').style.display = 'inline';
@@ -145,6 +196,8 @@ function saveKey() {
 async function startGeocoding() {
   const apiKey = document.getElementById('apiKey').value.trim();
   const raw = document.getElementById('addressInput').value.trim();
+  const country = document.getElementById('countrySelect').value;
+  const region = COUNTRIES[country] || 'gt';
 
   if (!apiKey) { setStatus('Ingresá tu API Key primero.'); return; }
   if (!raw) { setStatus('Pegá al menos una dirección.'); return; }
@@ -154,8 +207,6 @@ async function startGeocoding() {
 
   document.getElementById('progressWrap').style.display = 'block';
   document.getElementById('resultsWrap').style.display = 'none';
-  document.getElementById('copyBtn').style.display = 'none';
-  document.getElementById('downloadBtn').style.display = 'none';
   document.getElementById('geocodeBtn').disabled = true;
   setStatus('');
 
@@ -169,8 +220,8 @@ async function startGeocoding() {
     let result = { original: addr, normalized: '', lat: '', lng: '', precision: '', status: 'error' };
 
     try {
-      const query = encodeURIComponent(addr + ', Guatemala');
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}&region=gt&language=es`;
+      const query = encodeURIComponent(addr + ', ' + country);
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}&region=${region}&language=es`;
       const resp = await fetch(url);
       const data = await resp.json();
 
@@ -201,10 +252,8 @@ async function startGeocoding() {
       <td style="color:#5f5e5a">${esc(result.normalized)}</td>
       <td class="mono-cell">${result.lat}</td>
       <td class="mono-cell">${result.lng}</td>
-      <td class="mono-cell" style="font-family:inherit;font-size:12px;color:#888780">${result.precision}</td>
-      <td style="text-align:center">
-        <span class="${isOk ? 'badge-ok' : 'badge-err'}">${isOk ? '✓ OK' : esc(result.status)}</span>
-      </td>
+      <td style="text-align:center;font-size:12px;color:#888780">${result.precision}</td>
+      <td style="text-align:center"><span class="${isOk ? 'badge-ok' : 'badge-err'}">${isOk ? '✓ OK' : esc(result.status)}</span></td>
     `;
     body.appendChild(tr);
     await sleep(100);
@@ -222,8 +271,6 @@ async function startGeocoding() {
   `;
 
   document.getElementById('resultsWrap').style.display = 'block';
-  document.getElementById('copyBtn').style.display = '';
-  document.getElementById('downloadBtn').style.display = '';
   document.getElementById('geocodeBtn').disabled = false;
 }
 
@@ -242,25 +289,44 @@ function setStatus(msg) { document.getElementById('statusMsg').textContent = msg
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function copyResults() {
+function getTableData() {
+  const headers = ['Dirección original', 'Dirección corregida', 'Latitud', 'Longitud', 'Precisión', 'Estado'];
+  const rows = resultsData.map(r => [r.original, r.normalized, r.lat, r.lng, r.precision, r.status]);
+  return { headers, rows };
+}
+
+function downloadXLSX() {
   if (!resultsData.length) return;
-  const header = 'Dirección original\tDirección normalizada\tLatitud\tLongitud\tPrecisión\tEstado';
-  const rows = resultsData.map(r => `${r.original}\t${r.normalized}\t${r.lat}\t${r.lng}\t${r.precision}\t${r.status}`);
-  navigator.clipboard.writeText([header, ...rows].join('\n')).then(() => {
-    setStatus('¡Copiado! Pegalo directo en Excel.');
-    setTimeout(() => setStatus(''), 3000);
-  });
+  const { headers, rows } = getTableData();
+  const country = document.getElementById('countrySelect').value;
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  ws['!cols'] = [{ wch: 40 }, { wch: 45 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Direcciones');
+  XLSX.writeFile(wb, `geocodificacion_${country.replace(' ','_').toLowerCase()}.xlsx`);
 }
 
 function downloadCSV() {
   if (!resultsData.length) return;
-  const header = 'Dirección original,Dirección normalizada,Latitud,Longitud,Precisión,Estado';
-  const rows = resultsData.map(r => [r.original, r.normalized, r.lat, r.lng, r.precision, r.status].map(v => `"${(v||'').replace(/"/g,'""')}"`).join(','));
-  const csv = '\uFEFF' + [header, ...rows].join('\n');
+  const { headers, rows } = getTableData();
+  const country = document.getElementById('countrySelect').value;
+  const allRows = [headers, ...rows].map(r => r.map(v => `"${(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv = '\uFEFF' + allRows.join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'geocodificacion_guatemala.csv'; a.click();
+  const a = document.createElement('a');
+  a.href = url; a.download = `geocodificacion_${country.replace(' ','_').toLowerCase()}.csv`; a.click();
   URL.revokeObjectURL(url);
+}
+
+function copyResults() {
+  if (!resultsData.length) return;
+  const { headers, rows } = getTableData();
+  const text = [headers, ...rows].map(r => r.join('\t')).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    setStatus('¡Copiado! Abrí Excel y pegá con Ctrl+V.');
+    setTimeout(() => setStatus(''), 4000);
+  });
 }
 </script>
 </body>
